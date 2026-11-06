@@ -1,0 +1,6 @@
+{
+  "name": "Tri Ân Thầy Cô 20/11 - Tổ Toán THPT Gia Hội",
+  "description": "Ứng dụng web nghệ thuật mừng Ngày Nhà giáo Việt Nam 20/11 từ Tổ Toán - THPT Gia Hội. Chủ đề: Tháng Mười Một – Ngàn Hoa Tri Ân.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
