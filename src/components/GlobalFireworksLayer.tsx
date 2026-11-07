@@ -199,17 +199,32 @@ export const FireworksProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  // Ref to track last touch timestamp and prevent synthetic mouse double-firing
+  const lastTouchTimeRef = useRef(0);
+
   /**
    * Global pointer listener for Click & Touch on the sky
+   * Mobile: Immediate sparkling burst right under fingertip
+   * Desktop: Ballistic rocket rises from bottom to cursor
    */
   const handleGlobalPointerDown = useCallback(
     (e: PointerEvent) => {
       if (!config.enabled || !config.interactiveEnabled || !engineRef.current) return;
 
+      const isTouch = e.pointerType === 'touch' || e.pointerType === 'pen';
+
+      // Prevent double-firing on devices that emulate mouse events after touch
+      if (isTouch) {
+        lastTouchTimeRef.current = Date.now();
+      } else if (Date.now() - lastTouchTimeRef.current < 450) {
+        // Ignored synthetic mouse event within 450ms of touch
+        return;
+      }
+
       // Ignore clicks on buttons, inputs, links, or control panels
       const target = e.target as HTMLElement | null;
       if (target) {
-        const interactiveTag = target.closest('button, a, input, select, textarea, [role="button"], #header-nav');
+        const interactiveTag = target.closest('button, a, input, select, textarea, [role="button"], #header-nav, .floating-bar');
         if (interactiveTag) {
           return;
         }
@@ -219,7 +234,13 @@ export const FireworksProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const worldPos = engineRef.current.screenToWorld(e.clientX, e.clientY);
       const chosenType = engineRef.current.selectSmartRandomType();
 
-      engineRef.current.launchFireworkToTarget(worldPos.x, worldPos.y, worldPos.z, chosenType);
+      if (isTouch) {
+        // MOBILE: Instant sparkling burst directly at the touched position!
+        engineRef.current.triggerInstantBurst(worldPos.x, worldPos.y, worldPos.z, chosenType);
+      } else {
+        // DESKTOP: Rocket rises from bottom of screen to cursor
+        engineRef.current.launchFireworkToTarget(worldPos.x, worldPos.y, worldPos.z, chosenType);
+      }
 
       if (!hasInteractedOnce) {
         setHasInteractedOnce(true);

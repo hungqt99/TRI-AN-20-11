@@ -275,6 +275,7 @@ export class FireworksEngine {
     // 5. Events & Render Loop
     this.handleResize = this.handleResize.bind(this);
     window.addEventListener('resize', this.handleResize);
+    window.addEventListener('orientationchange', this.handleResize);
 
     this.animate = this.animate.bind(this);
     this.animId = requestAnimationFrame(this.animate);
@@ -389,14 +390,72 @@ export class FireworksEngine {
     const pos = this.camera.position.clone().add(dir.multiplyScalar(distance));
 
     return {
-      x: Math.max(-340, Math.min(340, pos.x)),
-      y: Math.max(70, Math.min(380, pos.y)),
+      x: Math.max(-420, Math.min(420, pos.x)),
+      y: Math.max(-80, Math.min(390, pos.y)),
       z: (Math.random() - 0.5) * 40,
     };
   }
 
   /**
-   * Launch Firework towards exact target coordinates from bottom edge of screen
+   * Immediate firework burst directly at the specified world coordinate (used for mobile touch).
+   * Spawns fingertip sparkle ring + full 3D particle explosion instantly without rocket flight delay.
+   */
+  public triggerInstantBurst(
+    targetX: number,
+    targetY: number,
+    targetZ: number = 0,
+    type?: FireworkType
+  ) {
+    if (!this.config.enabled) return;
+
+    const chosenType = type || this.selectSmartRandomType();
+
+    // 1. Fingertip sparkle flash ring right under finger
+    for (let i = 0; i < 36; i++) {
+      const p = this.getPooledParticle();
+      if (!p) break;
+      const angle = (i / 36) * Math.PI * 2;
+      const speed = 2.0 + Math.random() * 2.5;
+      p.x = targetX;
+      p.y = targetY;
+      p.z = targetZ;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed;
+      p.vz = (Math.random() - 0.5) * 1.5;
+      p.r = 1.0;
+      p.g = 0.95;
+      p.b = 0.55; // Brilliant golden flare
+      p.alpha = 1.0;
+      p.size = 24 * this.config.bloomBrightness;
+      p.maxLife = 26;
+      p.life = 26;
+      p.decay = 0.038;
+      p.gravity = 0.02;
+      p.drag = 0.94;
+      p.sparkle = true;
+      p.active = true;
+    }
+
+    // 2. Main explosion of chosen type
+    this.triggerExplosion(targetX, targetY, targetZ, chosenType);
+
+    // 3. Trigger explosion callback for screen coordinates & floating badge
+    if (this.onExplode && this.container) {
+      try {
+        const v = new THREE.Vector3(targetX, targetY, targetZ);
+        v.project(this.camera);
+        const rect = this.container.getBoundingClientRect();
+        const screenX = ((v.x + 1) / 2) * rect.width + rect.left;
+        const screenY = ((-v.y + 1) / 2) * rect.height + rect.top;
+        this.onExplode({ screenX, screenY, type: chosenType });
+      } catch {
+        // Ignored
+      }
+    }
+  }
+
+  /**
+   * Launch Firework towards exact target coordinates from bottom edge of screen (used for desktop mouse clicks)
    */
   public launchFireworkToTarget(
     targetX: number,
@@ -573,11 +632,11 @@ export class FireworksEngine {
       p.vz = Math.cos(phi) * speed;
 
       if (layer === 0) {
-        p.r = 1.0; p.g = 0.82; p.b = 0.35; // Gold
+        p.r = 1.0; p.g = 0.18; p.b = 0.28; // Ruby Red
       } else if (layer === 1) {
-        p.r = 1.0; p.g = 0.55; p.b = 0.70; // Rose ruby
+        p.r = 1.0; p.g = 0.45; p.b = 0.75; // Rose Pink
       } else {
-        p.r = 0.98; p.g = 0.98; p.b = 1.0; // Pearl
+        p.r = 1.0; p.g = 0.90; p.b = 0.40; // Pearl Gold
       }
 
       p.alpha = 1.0;
@@ -623,7 +682,7 @@ export class FireworksEngine {
     }
   }
 
-  // 4. Ring (Vòng tròn đồng tâm cân đối ba chiều)
+  // 4. Ring (Vòng tròn đồng tâm cân đối ba chiều - Vàng kim & Tím hoàng gia)
   private explodeRing(cx: number, cy: number, cz: number, count: number) {
     for (let i = 0; i < count; i++) {
       const p = this.getPooledParticle();
@@ -639,9 +698,12 @@ export class FireworksEngine {
       p.vy = Math.sin(angle) * speed;
       p.vz = (Math.random() - 0.5) * 0.8;
 
-      p.r = 1.0;
-      p.g = 0.88;
-      p.b = 0.35;
+      if (i % 2 === 0) {
+        p.r = 1.0; p.g = 0.88; p.b = 0.35; // Gold
+      } else {
+        p.r = 0.78; p.g = 0.28; p.b = 0.98; // Amethyst Purple
+      }
+
       p.alpha = 1.0;
       p.size = 20 * this.config.bloomBrightness;
       p.maxLife = 90;
@@ -654,7 +716,7 @@ export class FireworksEngine {
     }
   }
 
-  // 5. Heart (Trái tim lớn bằng hàng nghìn hạt sáng)
+  // 5. Heart (Trái tim tri ân rực rỡ - Đỏ Ruby, Hồng ngọc & Vàng kim)
   private explodeHeart(cx: number, cy: number, cz: number, count: number) {
     for (let i = 0; i < count; i++) {
       const p = this.getPooledParticle();
@@ -664,7 +726,7 @@ export class FireworksEngine {
       const hx = 16 * Math.pow(Math.sin(t), 3);
       const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
       const scale = 0.25 + Math.random() * 0.07;
-      const isSapphire = Math.random() > 0.65;
+      const colorRoll = Math.random();
 
       p.x = cx;
       p.y = cy;
@@ -673,10 +735,12 @@ export class FireworksEngine {
       p.vy = hy * scale + 0.6;
       p.vz = (Math.random() - 0.5) * 1.5;
 
-      if (isSapphire) {
-        p.r = 0.25; p.g = 0.65; p.b = 1.0; // Sapphire
+      if (colorRoll < 0.45) {
+        p.r = 1.0; p.g = 0.18; p.b = 0.28; // Ruby Red
+      } else if (colorRoll < 0.75) {
+        p.r = 1.0; p.g = 0.45; p.b = 0.75; // Rose Pink
       } else {
-        p.r = 1.0; p.g = 0.85; p.b = 0.35; // Gold
+        p.r = 1.0; p.g = 0.88; p.b = 0.35; // Gold
       }
 
       p.alpha = 1.0;
@@ -1187,6 +1251,7 @@ export class FireworksEngine {
     this.isDestroyed = true;
     if (this.animId) cancelAnimationFrame(this.animId);
     window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('orientationchange', this.handleResize);
 
     try {
       this.renderer.dispose();

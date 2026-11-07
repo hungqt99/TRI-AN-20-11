@@ -299,6 +299,7 @@ export function downloadStandaloneSingleHtml() {
       ctx.scale(dpr, dpr);
     }
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', resizeCanvas);
     resizeCanvas();
 
     const rockets = [];
@@ -391,6 +392,13 @@ export function downloadStandaloneSingleHtml() {
         decay: 0.012
       });
 
+      // Fingertip sparkle flash right at burst point
+      for (let i = 0; i < 28; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const spd = 1.0 + Math.random() * 2.5;
+        particles.push(createParticle(cx, cy, Math.cos(a) * spd, Math.sin(a) * spd, 'rgba(254, 240, 138, ', 3.5, 0.045, 0.02, 0.94));
+      }
+
       // Play soft chime note if audio context is running
       if (audioCtx && isPlaying) {
         playNote(440 + Math.random() * 300, audioCtx.currentTime, 0.4);
@@ -405,7 +413,8 @@ export function downloadStandaloneSingleHtml() {
             const hx = 16 * Math.pow(Math.sin(t), 3);
             const hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
             const speed = 0.22 + Math.random() * 0.08;
-            const color = Math.random() > 0.4 ? 'rgba(245, 158, 11, ' : 'rgba(56, 189, 248, ';
+            const roll = Math.random();
+            const color = roll < 0.45 ? 'rgba(239, 68, 68, ' : roll < 0.75 ? 'rgba(244, 63, 94, ' : 'rgba(245, 158, 11, ';
             particles.push(createParticle(cx, cy, hx * speed, hy * speed, color, 2.5, 0.012, 0.02, 0.96));
           }
           break;
@@ -415,7 +424,7 @@ export function downloadStandaloneSingleHtml() {
           for (let i = 0; i < count; i++) {
             const angle = (i / count) * Math.PI * 2;
             const speed = (shape === 'double-ring' && i % 2 === 0) ? 5.2 : 3.5;
-            const color = (shape === 'double-ring' && i % 2 === 0) ? 'rgba(245, 158, 11, ' : 'rgba(56, 189, 248, ';
+            const color = (shape === 'double-ring' && i % 2 === 0) ? 'rgba(245, 158, 11, ' : (i % 2 === 0 ? 'rgba(168, 85, 247, ' : 'rgba(56, 189, 248, ');
             particles.push(createParticle(cx, cy, Math.cos(angle) * speed, Math.sin(angle) * speed, color, 2.8, 0.013, 0.02, 0.97));
           }
           break;
@@ -427,7 +436,8 @@ export function downloadStandaloneSingleHtml() {
             const baseAngle = (pIdx / points) * Math.PI * 2 - Math.PI / 2;
             const spread = (Math.random() - 0.5) * 0.3;
             const speed = 2.0 + Math.random() * 4.5;
-            const color = Math.random() > 0.5 ? 'rgba(250, 204, 21, ' : 'rgba(56, 189, 248, ';
+            const roll = Math.random();
+            const color = roll < 0.35 ? 'rgba(56, 189, 248, ' : roll < 0.7 ? 'rgba(168, 85, 247, ' : 'rgba(255, 255, 255, ';
             particles.push(createParticle(cx, cy, Math.cos(baseAngle + spread) * speed, Math.sin(baseAngle + spread) * speed, color, 3, 0.014, 0.03, 0.97));
           }
           break;
@@ -454,7 +464,13 @@ export function downloadStandaloneSingleHtml() {
           for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = 1.8 + Math.random() * 5.5;
-            const color = (i % 3 === 0) ? 'rgba(245, 158, 11, ' : (i % 3 === 1) ? 'rgba(251, 113, 133, ' : 'rgba(254, 240, 138, ';
+            const tier = i % 6;
+            const color = tier === 0 ? 'rgba(245, 158, 11, ' // Gold
+              : tier === 1 ? 'rgba(239, 68, 68, ' // Ruby Red
+              : tier === 2 ? 'rgba(56, 189, 248, ' // Sapphire Blue
+              : tier === 3 ? 'rgba(168, 85, 247, ' // Amethyst Purple
+              : tier === 4 ? 'rgba(244, 63, 94, ' // Rose Pink
+              : 'rgba(255, 255, 255, '; // Diamond White
             particles.push(createParticle(cx, cy, Math.cos(angle) * speed, Math.sin(angle) * speed, color, 3.2, 0.011, 0.038, 0.97));
           }
           break;
@@ -559,15 +575,34 @@ export function downloadStandaloneSingleHtml() {
     }
     requestAnimationFrame(render);
 
-    // Click / Touch listener across the sky
+    let lastTouchTime = 0;
+
+    // Click / Touch listener across the sky (Mobile: instant burst; Desktop: rising rocket)
     window.addEventListener('pointerdown', function(e) {
       if (!fireworksEnabled) return;
+
+      const isTouch = e.pointerType === 'touch' || e.pointerType === 'pen';
+
+      // Guard against synthetic mouse events fired ~300ms after touch on mobile
+      if (isTouch) {
+        lastTouchTime = Date.now();
+      } else if (Date.now() - lastTouchTime < 450) {
+        return; // Ignore synthetic mouse event
+      }
+
       const target = e.target;
       if (target && target.closest('button, a, input, textarea, .interactive-flower, .floating-btn, .title-centerpiece')) {
         return; // Don't intercept clicks on interactive buttons
       }
-      launchFirework(e.clientX, e.clientY);
-    });
+
+      if (isTouch) {
+        // MOBILE: Instant sparkling burst at the touched position!
+        explode(e.clientX, e.clientY);
+      } else {
+        // DESKTOP: Launch rocket from bottom to cursor!
+        launchFirework(e.clientX, e.clientY);
+      }
+    }, { passive: true });
 
     function toggleFireworks() {
       fireworksEnabled = !fireworksEnabled;
