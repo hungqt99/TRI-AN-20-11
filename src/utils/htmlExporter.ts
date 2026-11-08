@@ -179,9 +179,10 @@ export function downloadStandaloneSingleHtml() {
       🎆 Pháo hoa: Đang Bật
     </button>
     <button class="floating-btn" id="toggle-music-btn" onclick="toggleMusic()">
-      ♪ Hòa tấu: Bài Ca Người GVND
+      ♪ Nhạc: Bụi Phấn
     </button>
   </div>
+  <audio id="bg-audio" loop preload="auto" src="assets/aistudio/B_i_Ph_n_9eaa576b.mp3"></audio>
 
   <div class="container">
     <div class="center" style="padding: 2.5rem 0 1.5rem 0;">
@@ -595,13 +596,8 @@ export function downloadStandaloneSingleHtml() {
         return; // Don't intercept clicks on interactive buttons
       }
 
-      if (isTouch) {
-        // MOBILE: Instant sparkling burst at the touched position!
-        explode(e.clientX, e.clientY);
-      } else {
-        // DESKTOP: Launch rocket from bottom to cursor!
-        launchFirework(e.clientX, e.clientY);
-      }
+      // Both desktop click and mobile touch trigger immediate burst at exact coordinates!
+      explode(e.clientX, e.clientY);
     }, { passive: true });
 
     function toggleFireworks() {
@@ -612,7 +608,7 @@ export function downloadStandaloneSingleHtml() {
     }
 
     /* =========================================================
-     * PURE WEB AUDIO SYNTHESIZER: "BÀI CA NGƯỜI GIÁO VIÊN NHÂN DÂN"
+     * PURE WEB AUDIO SYNTHESIZER: "BỤI PHẤN"
      * ========================================================= */
     let audioCtx = null;
     let isPlaying = false;
@@ -623,16 +619,22 @@ export function downloadStandaloneSingleHtml() {
     const C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.00, A4 = 440.00, B4 = 493.88;
     const C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.00;
 
-    // "Bài ca người giáo viên nhân dân" melody score
+    // "Bụi phấn" melody score (Nhạc: Vũ Hoàng - Thơ: Lê Văn Lộc)
     const MELODY = [
-      { f: C4, d: 0.6 }, { f: E4, d: 0.3 }, { f: G4, d: 0.3 }, { f: A4, d: 0.6 }, { f: G4, d: 0.6 },
-      { f: C5, d: 0.9 }, { f: B4, d: 0.3 }, { f: A4, d: 0.6 }, { f: G4, d: 1.2 },
-      { f: E4, d: 0.6 }, { f: G4, d: 0.3 }, { f: A4, d: 0.3 }, { f: C5, d: 0.6 }, { f: A4, d: 0.6 },
-      { f: G4, d: 0.6 }, { f: E4, d: 0.6 }, { f: D4, d: 1.2 },
-      { f: C4, d: 0.6 }, { f: E4, d: 0.3 }, { f: G4, d: 0.3 }, { f: A4, d: 0.6 }, { f: C5, d: 0.6 },
-      { f: D5, d: 0.9 }, { f: C5, d: 0.3 }, { f: A4, d: 0.6 }, { f: G4, d: 1.2 },
-      { f: G4, d: 0.6 }, { f: A4, d: 0.3 }, { f: C5, d: 0.3 }, { f: D5, d: 0.6 }, { f: E5, d: 0.6 },
-      { f: D5, d: 0.6 }, { f: C5, d: 0.6 }, { f: C5, d: 1.4 }
+      { f: C4, d: 0.6 }, { f: E4, d: 0.6 }, { f: G4, d: 0.6 }, { f: A4, d: 0.9 },
+      { f: G4, d: 0.3 }, { f: A4, d: 0.3 }, { f: G4, d: 0.6 }, { f: E4, d: 1.2 },
+      { f: C4, d: 0.6 }, { f: E4, d: 0.6 }, { f: G4, d: 0.6 }, { f: A4, d: 0.9 },
+      { f: C5, d: 0.3 }, { f: A4, d: 0.3 }, { f: G4, d: 0.6 }, { f: E4, d: 1.2 },
+      { f: C4, d: 0.6 }, { f: E4, d: 0.6 }, { f: G4, d: 0.6 }, { f: A4, d: 0.9 },
+      { f: G4, d: 0.3 }, { f: A4, d: 0.3 }, { f: C5, d: 0.6 }, { f: D5, d: 1.2 },
+      { f: C5, d: 0.6 }, { f: A4, d: 0.6 }, { f: G4, d: 0.6 }, { f: E4, d: 0.9 },
+      { f: G4, d: 0.3 }, { f: A4, d: 0.6 }, { f: C5, d: 0.6 }, { f: D5, d: 1.2 },
+      { f: D5, d: 0.6 }, { f: E5, d: 0.6 }, { f: D5, d: 0.6 }, { f: C5, d: 0.9 },
+      { f: A4, d: 0.3 }, { f: C5, d: 0.6 }, { f: D5, d: 0.6 }, { f: C5, d: 1.2 },
+      { f: C5, d: 0.6 }, { f: A4, d: 0.6 }, { f: G4, d: 0.6 }, { f: E4, d: 0.9 },
+      { f: G4, d: 0.3 }, { f: A4, d: 0.6 }, { f: C5, d: 0.6 }, { f: D5, d: 1.2 },
+      { f: D5, d: 0.6 }, { f: E5, d: 0.6 }, { f: D5, d: 0.6 }, { f: C5, d: 0.9 },
+      { f: A4, d: 0.3 }, { f: C5, d: 0.6 }, { f: D5, d: 0.6 }, { f: C5, d: 1.8 }
     ];
 
     function initAudio() {
@@ -674,13 +676,22 @@ export function downloadStandaloneSingleHtml() {
       initAudio();
       isPlaying = !isPlaying;
       const btn = document.getElementById('toggle-music-btn');
+      const audioElem = document.getElementById('bg-audio');
+
       if (isPlaying) {
-        btn.innerText = '♪ Hòa tấu: Đang Phát';
+        btn.innerText = '♪ Nhạc: Bụi Phấn (Đang Phát)';
         btn.style.color = '#38bdf8';
-        scheduleNextNote();
+        if (audioElem && audioElem.src) {
+          audioElem.play().catch(function() {
+            scheduleNextNote();
+          });
+        } else {
+          scheduleNextNote();
+        }
       } else {
-        btn.innerText = '♪ Hòa tấu: Đã Dừng';
+        btn.innerText = '♪ Nhạc: Bụi Phấn (Đã Dừng)';
         btn.style.color = '#cbd5e1';
+        if (audioElem) audioElem.pause();
         clearTimeout(melodyTimer);
       }
     }

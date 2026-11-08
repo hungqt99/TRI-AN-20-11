@@ -205,10 +205,13 @@ export const FireworksProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   /**
    * Global pointer listener for Click & Touch on the sky
    * Mobile: Immediate sparkling burst right under fingertip
-   * Desktop: Ballistic rocket rises from bottom to cursor
+   * Desktop: Immediate sparkling burst right at cursor coordinate
    */
   const handleGlobalPointerDown = useCallback(
     (e: PointerEvent) => {
+      // Only respond to left click on desktop (button 0) or touch/pen
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+
       if (!config.enabled || !config.interactiveEnabled || !engineRef.current) return;
 
       const isTouch = e.pointerType === 'touch' || e.pointerType === 'pen';
@@ -234,13 +237,8 @@ export const FireworksProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const worldPos = engineRef.current.screenToWorld(e.clientX, e.clientY);
       const chosenType = engineRef.current.selectSmartRandomType();
 
-      if (isTouch) {
-        // MOBILE: Instant sparkling burst directly at the touched position!
-        engineRef.current.triggerInstantBurst(worldPos.x, worldPos.y, worldPos.z, chosenType);
-      } else {
-        // DESKTOP: Rocket rises from bottom of screen to cursor
-        engineRef.current.launchFireworkToTarget(worldPos.x, worldPos.y, worldPos.z, chosenType);
-      }
+      // Trigger instant sparkling burst right at exact interaction coordinates!
+      engineRef.current.triggerInstantBurst(worldPos.x, worldPos.y, worldPos.z, chosenType);
 
       if (!hasInteractedOnce) {
         setHasInteractedOnce(true);
@@ -277,18 +275,18 @@ export const FireworksProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     >
       {/* 
         Global Fireworks 3D Layer:
-        Fixed across the viewport, pointer-events-none allows page buttons to receive clicks,
-        while window's pointerdown handles touch/clicks everywhere else.
+        z-35 places it above background & content cards (z-20),
+        pointer-events-none allows page buttons and scrolling to work 100% unimpeded.
       */}
       <div
         ref={containerRef}
         id="global-fireworks-layer"
-        className="fixed inset-0 pointer-events-none z-10 overflow-hidden"
+        className="fixed inset-0 pointer-events-none z-35 overflow-hidden"
         aria-hidden="true"
       />
 
       {/* Floating Celebratory Tribute Badges */}
-      <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden" aria-hidden="true">
+      <div className="fixed inset-0 pointer-events-none z-36 overflow-hidden" aria-hidden="true">
         {floatingBadges.map((badge) => (
           <div
             key={badge.id}

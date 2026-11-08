@@ -21,6 +21,83 @@ const C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.
 const C6 = 1046.50;
 
 /**
+ * Melody score of "BỤI PHẤN" (Nhạc: Vũ Hoàng - Thơ: Lê Văn Lộc)
+ * "Khi thầy viết bảng, bụi phấn rơi rơi...
+ * Có hạt bụi nào rơi trên bục giảng, có hạt bụi nào vương trên tóc thầy..."
+ */
+export const BUI_PHAN_MELODY: MusicalNote[] = [
+  // "Khi thầy viết bảng, bụi phấn rơi rơi"
+  { note: 'C4', freq: C4, duration: 1 },
+  { note: 'E4', freq: E4, duration: 1 },
+  { note: 'G4', freq: G4, duration: 1 },
+  { note: 'A4', freq: A4, duration: 1.5 },
+  { note: 'G4', freq: G4, duration: 0.5 },
+  { note: 'A4', freq: A4, duration: 0.5 },
+  { note: 'G4', freq: G4, duration: 1 },
+  { note: 'E4', freq: E4, duration: 2 },
+
+  // "Có hạt bụi nào rơi trên bục giảng"
+  { note: 'C4', freq: C4, duration: 1 },
+  { note: 'E4', freq: E4, duration: 1 },
+  { note: 'G4', freq: G4, duration: 1 },
+  { note: 'A4', freq: A4, duration: 1.5 },
+  { note: 'C5', freq: C5, duration: 0.5 },
+  { note: 'A4', freq: A4, duration: 0.5 },
+  { note: 'G4', freq: G4, duration: 1 },
+  { note: 'E4', freq: E4, duration: 2 },
+
+  // "Có hạt bụi nào vương trên tóc thầy"
+  { note: 'C4', freq: C4, duration: 1 },
+  { note: 'E4', freq: E4, duration: 1 },
+  { note: 'G4', freq: G4, duration: 1 },
+  { note: 'A4', freq: A4, duration: 1.5 },
+  { note: 'G4', freq: G4, duration: 0.5 },
+  { note: 'A4', freq: A4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 2 },
+
+  // "Em yêu phút giây này, thầy em tóc như bạc thêm"
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'A4', freq: A4, duration: 1 },
+  { note: 'G4', freq: G4, duration: 1 },
+  { note: 'E4', freq: E4, duration: 1.5 },
+  { note: 'G4', freq: G4, duration: 0.5 },
+  { note: 'A4', freq: A4, duration: 1 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 2 },
+
+  // "Bạc thêm vì bụi phấn, cho em bài học hay"
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'E5', freq: E5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 1.5 },
+  { note: 'A4', freq: A4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 2 },
+
+  // "Mai sau lớn nên người, làm sao có thể nào quên"
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'A4', freq: A4, duration: 1 },
+  { note: 'G4', freq: G4, duration: 1 },
+  { note: 'E4', freq: E4, duration: 1.5 },
+  { note: 'G4', freq: G4, duration: 0.5 },
+  { note: 'A4', freq: A4, duration: 1 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 2 },
+
+  // "Ngày xưa thầy dạy dỗ khi em tuổi còn thơ"
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'E5', freq: E5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 1.5 },
+  { note: 'A4', freq: A4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 3 },
+];
+
+/**
  * Melody score of "Bài ca người giáo viên nhân dân" in F Major / C Major harmonious transcription
  * Tempo: ~90 BPM (1 beat = ~0.67s)
  */

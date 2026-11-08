@@ -1,10 +1,10 @@
 /**
- * Global Audio Manager for "BÀI CA NGƯỜI GIÁO VIÊN NHÂN DÂN"
+ * Global Audio Manager for "BỤI PHẤN" (Nhạc: Vũ Hoàng · Lời: Lê Văn Lộc)
  *
  * Capabilities:
  * 1. Dual-source architecture:
- *    - Priority 1: Plays real MP3/WAV file from `/assets/audio/bai_ca_nguoi_giao_vien_nhan_dan.mp3` or `/assets/audio/bai_ca_nguoi_giao_vien_nhan_dan.wav` if placed by administrator.
- *    - Priority 2: Built-in procedural orchestral acoustic piano + flute/strings synthesizer playing the EXACT melody and harmony of "Bài ca người giáo viên nhân dân" (Huang Van).
+ *    - Priority 1: Plays real MP3 file from `/assets/aistudio/B_i_Ph_n_9eaa576b.mp3` or `/assets/audio/bui-phan.mp3`
+ *    - Priority 2: Built-in procedural orchestral acoustic piano synthesizer playing the EXACT melody of "Bụi Phấn".
  * 2. Fully global singleton:
  *    - Persists across all slides, modals, full-screen transitions, and re-renders.
  *    - Accurate pause/resume without restarting.
@@ -12,7 +12,7 @@
  *    - Real-time audio waveform / spectrum analyzer for UI visualizers.
  */
 
-import { BAI_CA_NGUOI_GIAO_VIEN_NHAN_DAN_MELODY, MusicalNote } from './songScore';
+import { BUI_PHAN_MELODY, MusicalNote } from './songScore';
 
 export type AudioSourceType = 'file' | 'synth';
 
@@ -21,7 +21,7 @@ class GlobalAudioManager {
 
   // HTMLAudioElement for user provided MP3/WAV files
   private audioElement: HTMLAudioElement | null = null;
-  private hasCustomFile = false;
+  private hasCustomFile = true;
 
   // Web Audio Context for synthesizer & chimes
   private audioCtx: AudioContext | null = null;
@@ -31,7 +31,7 @@ class GlobalAudioManager {
   // Synthesizer playback state
   private isPlaying = false;
   private isMuted = false;
-  private volume = 0.45; // Default 45%
+  private volume = 0.55; // Default 55%
   private currentNoteIndex = 0;
   private synthTimeoutId: number | null = null;
   private activeOscillators: OscillatorNode[] = [];
@@ -56,39 +56,24 @@ class GlobalAudioManager {
     this.audioElement = new Audio();
     this.audioElement.loop = true;
     this.audioElement.volume = this.volume;
-    this.audioElement.preload = 'metadata';
+    this.audioElement.preload = 'auto';
 
-    // Primary audio file paths (supports both hyphen and underscore names)
+    // Primary audio file paths for Bụi Phấn
     const audioCandidates = [
-      '/assets/audio/bai-ca-nguoi-giao-vien-nhan-dan.mp3',
-      '/assets/audio/bai-ca-nguoi-giao-vien-nhan-dan.wav',
-      '/bai-ca-nguoi-giao-vien-nhan-dan.mp3',
-      '/bai-ca-nguoi-giao-vien-nhan-dan.wav',
-      '/assets/audio/bai_ca_nguoi_giao_vien_nhan_dan.mp3',
-      '/assets/audio/bai_ca_nguoi_giao_vien_nhan_dan.wav',
-      '/audio/bai_ca_nguoi_giao_vien_nhan_dan.mp3',
+      '/assets/aistudio/B_i_Ph_n_9eaa576b.mp3',
+      '/assets/audio/bui-phan.mp3',
+      '/bui-phan.mp3',
+      '/B_i_Ph_n_9eaa576b.mp3',
     ];
 
-    // Try detecting if candidate exists via HEAD request or canPlay
-    const testCandidate = async () => {
-      for (const path of audioCandidates) {
-        try {
-          const res = await fetch(path, { method: 'HEAD' });
-          if (res.ok) {
-            this.audioElement!.src = path;
-            this.hasCustomFile = true;
-            this.notify();
-            return;
-          }
-        } catch {
-          // File not present, fallback gracefully to procedural orchestral synthesizer
-        }
-      }
-      this.hasCustomFile = false;
-      this.notify();
-    };
+    // Set source immediately to enable synchronous mobile & desktop playback
+    this.audioElement.src = audioCandidates[0];
+    this.hasCustomFile = true;
 
-    testCandidate();
+    this.audioElement.addEventListener('canplay', () => {
+      this.hasCustomFile = true;
+      this.notify();
+    });
 
     this.audioElement.addEventListener('ended', () => {
       if (this.hasCustomFile && this.isPlaying) {
@@ -98,7 +83,12 @@ class GlobalAudioManager {
     });
 
     this.audioElement.addEventListener('error', () => {
-      // If file fails, fallback to procedural synthesis
+      // If primary path errors, try fallback
+      if (this.audioElement && !this.audioElement.src.includes('bui-phan.mp3')) {
+        this.audioElement.src = '/assets/audio/bui-phan.mp3';
+        this.audioElement.load();
+        return;
+      }
       this.hasCustomFile = false;
       if (this.isPlaying) {
         this.startSynthPlayback();
@@ -128,7 +118,7 @@ class GlobalAudioManager {
   }
 
   /**
-   * Start or resume playing "Bài ca người giáo viên nhân dân"
+   * Start or resume playing "Bụi Phấn"
    */
   public async play(): Promise<boolean> {
     this.initWebAudio();
@@ -252,7 +242,7 @@ class GlobalAudioManager {
     const playNextNote = () => {
       if (!this.isPlaying || !this.audioCtx || !this.analyser) return;
 
-      const score = BAI_CA_NGUOI_GIAO_VIEN_NHAN_DAN_MELODY;
+      const score = BUI_PHAN_MELODY;
       const noteData = score[this.currentNoteIndex];
       const durationSec = (noteData.duration * beatDurationMs) / 1000;
 

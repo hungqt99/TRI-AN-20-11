@@ -61,7 +61,7 @@ export const MusicControlPanel: React.FC = () => {
         <button
           onClick={handlePlayToggle}
           className="w-8 h-8 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 flex items-center justify-center transition-all shadow active:scale-95"
-          title={isPlaying ? 'Tạm dừng nhạc' : 'Phát bản hòa tấu: Bài ca người giáo viên nhân dân'}
+          title={isPlaying ? 'Tạm dừng nhạc' : 'Phát bài hát: Bụi phấn'}
           aria-label="Phát hoặc tạm dừng"
         >
           {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
@@ -77,10 +77,10 @@ export const MusicControlPanel: React.FC = () => {
             <Music className={`w-3.5 h-3.5 text-amber-300 ${isPlaying ? 'animate-bounce' : 'opacity-60'}`} />
             <div className="hidden sm:flex flex-col text-left">
               <span className="text-[11px] font-semibold text-amber-200 leading-tight">
-                Bài ca Người giáo viên nhân dân
+                Bụi Phấn
               </span>
               <span className="text-[9px] text-stone-400 flex items-center gap-1">
-                {sourceType === 'file' ? 'Bản hòa tấu MP3' : 'Hòa tấu giao hưởng'}
+                {sourceType === 'file' ? 'Bản MP3 chính thức' : 'Giai điệu Bụi phấn'}
                 <span className="text-amber-400/70">·</span>
                 {isPlaying ? `${Math.round(volume * 100)}%` : 'Tạm dừng'}
               </span>
@@ -133,14 +133,14 @@ export const MusicControlPanel: React.FC = () => {
             {/* Song info badge */}
             <div className="bg-slate-950/60 p-2 rounded-xl border border-slate-800">
               <div className="text-[11px] font-semibold text-amber-100">
-                BÀI CA NGƯỜI GIÁO VIÊN NHÂN DÂN
+                BÀI HÁT: BỤI PHẤN
               </div>
               <div className="text-[10px] text-stone-300 mt-0.5">
-                Nhạc sĩ: Hoàng Vân · Hòa tấu không lời
+                Nhạc: Vũ Hoàng · Thơ: Lê Văn Lộc
               </div>
               <div className="text-[9px] text-amber-400/80 mt-1 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{sourceType === 'file' ? 'Đang phát từ file âm thanh quản trị viên' : 'Đang phát bản hòa tấu giao hưởng phòng thu'}</span>
+                <span>{sourceType === 'file' ? 'Bản MP3 chính thức đã tải lên' : 'Bản hòa tấu giai điệu'}</span>
               </div>
             </div>
 
