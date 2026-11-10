@@ -178,11 +178,20 @@ export function downloadStandaloneSingleHtml() {
     <button class="floating-btn" id="toggle-fireworks-btn" onclick="toggleFireworks()">
       🎆 Pháo hoa: Đang Bật
     </button>
-    <button class="floating-btn" id="toggle-music-btn" onclick="toggleMusic()">
-      ♪ Nhạc: Bụi Phấn
-    </button>
+    <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(15,23,42,0.85); border: 1px solid rgba(245,158,11,0.45); border-radius: 9999px; padding: 2px 8px;">
+      <button class="floating-btn" style="border:none; padding:4px 6px; margin:0;" onclick="prevSong()" title="Bài trước">⏮</button>
+      <button class="floating-btn" id="toggle-music-btn" style="border:none; margin:0;" onclick="toggleMusic()">
+        ♪ 1/3: Bụi Phấn
+      </button>
+      <button class="floating-btn" style="border:none; padding:4px 6px; margin:0;" onclick="nextSong()" title="Bài tiếp">⏭</button>
+      <select id="song-select" onchange="changeSong(this.value)" style="background:#0f172a; color:#fde68a; border:1px solid rgba(245,158,11,0.3); border-radius:6px; font-size:11px; padding:2px 4px; cursor:pointer;">
+        <option value="0">1. Bụi Phấn</option>
+        <option value="1">2. Nghề Giáo Tôi Yêu</option>
+        <option value="2">3. Bài Ca Người GVND</option>
+      </select>
+    </div>
   </div>
-  <audio id="bg-audio" loop preload="auto" src="assets/aistudio/B_i_Ph_n_9eaa576b.mp3"></audio>
+  <audio id="bg-audio" preload="auto" src="assets/aistudio/B_i_Ph_n_9eaa576b.mp3"></audio>
 
   <div class="container">
     <div class="center" style="padding: 2.5rem 0 1.5rem 0;">
@@ -664,6 +673,48 @@ export function downloadStandaloneSingleHtml() {
       osc.stop(time + duration);
     }
 
+    const SONGS = [
+      { title: 'Bụi Phấn', src: 'assets/aistudio/B_i_Ph_n_9eaa576b.mp3' },
+      { title: 'Nghề Giáo Tôi Yêu', src: 'assets/aistudio/NGH__GI_O_T_I_Y_U_-_PH_M_TH_Y_DUNG____B_I_H_T_NG_Y_NH__GI_O_VI_T_NAM_-__320_Kbps__5cec219d.mp3' },
+      { title: 'Bài Ca Người GVND', src: 'assets/aistudio/B_i_Ca_Ng__i_Gi_o_Vi_n_Nh_n_D_n_b1107779.mp3' }
+    ];
+    let currentSongIdx = 0;
+
+    function updateMusicButton() {
+      const btn = document.getElementById('toggle-music-btn');
+      const select = document.getElementById('song-select');
+      const cur = SONGS[currentSongIdx];
+      if (btn) {
+        btn.innerText = '♪ ' + (currentSongIdx + 1) + '/3: ' + cur.title + (isPlaying ? ' (Phát)' : ' (Dừng)');
+        btn.style.color = isPlaying ? '#38bdf8' : '#cbd5e1';
+      }
+      if (select) {
+        select.value = String(currentSongIdx);
+      }
+    }
+
+    function changeSong(idx) {
+      currentSongIdx = parseInt(idx, 10) || 0;
+      const audioElem = document.getElementById('bg-audio');
+      if (audioElem) {
+        audioElem.src = SONGS[currentSongIdx].src;
+        if (isPlaying) {
+          audioElem.play().catch(function() {});
+        }
+      }
+      updateMusicButton();
+    }
+
+    function nextSong() {
+      currentSongIdx = (currentSongIdx + 1) % SONGS.length;
+      changeSong(currentSongIdx);
+    }
+
+    function prevSong() {
+      currentSongIdx = (currentSongIdx - 1 + SONGS.length) % SONGS.length;
+      changeSong(currentSongIdx);
+    }
+
     function scheduleNextNote() {
       if (!isPlaying || !audioCtx) return;
       const item = MELODY[songIndex];
@@ -675,12 +726,9 @@ export function downloadStandaloneSingleHtml() {
     function toggleMusic() {
       initAudio();
       isPlaying = !isPlaying;
-      const btn = document.getElementById('toggle-music-btn');
       const audioElem = document.getElementById('bg-audio');
 
       if (isPlaying) {
-        btn.innerText = '♪ Nhạc: Bụi Phấn (Đang Phát)';
-        btn.style.color = '#38bdf8';
         if (audioElem && audioElem.src) {
           audioElem.play().catch(function() {
             scheduleNextNote();
@@ -689,12 +737,21 @@ export function downloadStandaloneSingleHtml() {
           scheduleNextNote();
         }
       } else {
-        btn.innerText = '♪ Nhạc: Bụi Phấn (Đã Dừng)';
-        btn.style.color = '#cbd5e1';
         if (audioElem) audioElem.pause();
         clearTimeout(melodyTimer);
       }
+      updateMusicButton();
     }
+
+    // Attach ended listener to auto advance
+    document.addEventListener('DOMContentLoaded', function() {
+      const audioElem = document.getElementById('bg-audio');
+      if (audioElem) {
+        audioElem.addEventListener('ended', function() {
+          nextSong();
+        });
+      }
+    });
 
     function showQuote(text) {
       initAudio();

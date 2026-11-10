@@ -1,40 +1,107 @@
 /**
- * Global Audio Manager for "BỤI PHẤN" (Nhạc: Vũ Hoàng · Lời: Lê Văn Lộc)
+ * Global Audio Manager & Playlist Controller
+ * Tri Ân Thầy Cô 20/11 – Tổ Toán THPT Gia Hội
  *
- * Capabilities:
- * 1. Dual-source architecture:
- *    - Priority 1: Plays real MP3 file from `/assets/aistudio/B_i_Ph_n_9eaa576b.mp3` or `/assets/audio/bui-phan.mp3`
- *    - Priority 2: Built-in procedural orchestral acoustic piano synthesizer playing the EXACT melody of "Bụi Phấn".
- * 2. Fully global singleton:
- *    - Persists across all slides, modals, full-screen transitions, and re-renders.
- *    - Accurate pause/resume without restarting.
- *    - Volume control (0 - 100%), mute/unmute, looping.
- *    - Real-time audio waveform / spectrum analyzer for UI visualizers.
+ * Danh sách 3 ca khúc tri ân:
+ * 1. Bụi Phấn (Nhạc: Vũ Hoàng · Thơ: Lê Văn Lộc)
+ * 2. Nghề Giáo Tôi Yêu (Nhạc & Lời: Bùi Anh Tú · Thể hiện: Phạm Thùy Dung)
+ * 3. Bài Ca Người Giáo Viên Nhân Dân (Sáng tác: Nhạc sĩ Hoàng Vân)
+ *
+ * Tính năng:
+ * - Hỗ trợ phát cả 3 bài hát mượt mà trên Desktop và Điện thoại (iOS / Android)
+ * - Chuyển đổi linh hoạt giữa các bài hát bất kỳ lúc nào (Next / Prev / Chọn trực tiếp)
+ * - Tự động phát bài kế tiếp khi hết bài (Playlist Loop) hoặc Lặp lại 1 bài (Single Loop)
+ * - Tích hợp hệ thống nhạc giao hưởng Synthesizer Web Audio dự phòng cho cả 3 ca khúc
+ * - Bộ phân tích sóng âm (AnalyserNode) cho hiệu ứng Audio Visualizer động
  */
 
-import { BUI_PHAN_MELODY, MusicalNote } from './songScore';
+import {
+  BUI_PHAN_MELODY,
+  BAI_CA_NGUOI_GIAO_VIEN_NHAN_DAN_MELODY,
+  NGHE_GIAO_TOI_YEU_MELODY,
+  MusicalNote,
+} from './songScore';
 
 export type AudioSourceType = 'file' | 'synth';
+export type LoopMode = 'playlist' | 'single';
+
+export interface SongItem {
+  id: string;
+  title: string;
+  shortTitle: string;
+  composer: string;
+  artist: string;
+  sources: string[];
+  synthScore: MusicalNote[];
+  tempoBpm: number;
+}
+
+export const PLAYLIST: SongItem[] = [
+  {
+    id: 'bui-phan',
+    title: 'Bụi Phấn',
+    shortTitle: 'Bụi Phấn',
+    composer: 'Vũ Hoàng · Thơ: Lê Văn Lộc',
+    artist: 'Ca khúc tri ân truyền thống',
+    sources: [
+      '/assets/aistudio/B_i_Ph_n_9eaa576b.mp3',
+      '/assets/audio/bui-phan.mp3',
+      '/bui-phan.mp3',
+    ],
+    synthScore: BUI_PHAN_MELODY,
+    tempoBpm: 96,
+  },
+  {
+    id: 'nghe-giao-toi-yeu',
+    title: 'Nghề Giáo Tôi Yêu',
+    shortTitle: 'Nghề Giáo Tôi Yêu',
+    composer: 'Bùi Anh Tú',
+    artist: 'NSƯT Phạm Thùy Dung',
+    sources: [
+      '/assets/aistudio/NGH__GI_O_T_I_Y_U_-_PH_M_TH_Y_DUNG____B_I_H_T_NG_Y_NH__GI_O_VI_T_NAM_-__320_Kbps__5cec219d.mp3',
+      '/assets/audio/nghe-giao-toi-yeu.mp3',
+    ],
+    synthScore: NGHE_GIAO_TOI_YEU_MELODY,
+    tempoBpm: 88,
+  },
+  {
+    id: 'bai-ca-nguoi-giao-vien-nhan-dan',
+    title: 'Bài Ca Người Giáo Viên Nhân Dân',
+    shortTitle: 'Bài Ca Người GVND',
+    composer: 'Hoàng Vân',
+    artist: 'Khúc ca tự hào & Hòa tấu',
+    sources: [
+      '/assets/aistudio/B_i_Ca_Ng__i_Gi_o_Vi_n_Nh_n_D_n_b1107779.mp3',
+      '/assets/audio/bai-ca-nguoi-giao-vien-nhan-dan.mp3',
+    ],
+    synthScore: BAI_CA_NGUOI_GIAO_VIEN_NHAN_DAN_MELODY,
+    tempoBpm: 94,
+  },
+];
 
 class GlobalAudioManager {
   private static instance: GlobalAudioManager | null = null;
 
-  // HTMLAudioElement for user provided MP3/WAV files
+  // HTMLAudioElement for user provided MP3 files
   private audioElement: HTMLAudioElement | null = null;
   private hasCustomFile = true;
+  private currentSourceCandidateIndex = 0;
 
   // Web Audio Context for synthesizer & chimes
   private audioCtx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private analyser: AnalyserNode | null = null;
 
-  // Synthesizer playback state
+  // Playlist State
+  private currentSongIndex = 0;
+  private loopMode: LoopMode = 'playlist';
+
+  // Playback state
   private isPlaying = false;
   private isMuted = false;
   private volume = 0.55; // Default 55%
   private currentNoteIndex = 0;
   private synthTimeoutId: number | null = null;
-  private activeOscillators: OscillatorNode[] = [];
 
   // Listeners for UI state update
   private listeners: Set<() => void> = new Set();
@@ -54,21 +121,11 @@ class GlobalAudioManager {
     if (typeof window === 'undefined') return;
 
     this.audioElement = new Audio();
-    this.audioElement.loop = true;
     this.audioElement.volume = this.volume;
     this.audioElement.preload = 'auto';
 
-    // Primary audio file paths for Bụi Phấn
-    const audioCandidates = [
-      '/assets/aistudio/B_i_Ph_n_9eaa576b.mp3',
-      '/assets/audio/bui-phan.mp3',
-      '/bui-phan.mp3',
-      '/B_i_Ph_n_9eaa576b.mp3',
-    ];
-
-    // Set source immediately to enable synchronous mobile & desktop playback
-    this.audioElement.src = audioCandidates[0];
-    this.hasCustomFile = true;
+    // Set first song source
+    this.applyCurrentSongSource();
 
     this.audioElement.addEventListener('canplay', () => {
       this.hasCustomFile = true;
@@ -76,30 +133,58 @@ class GlobalAudioManager {
     });
 
     this.audioElement.addEventListener('ended', () => {
-      if (this.hasCustomFile && this.isPlaying) {
-        this.audioElement!.currentTime = 0;
-        this.audioElement!.play().catch(() => {});
+      if (!this.isPlaying) return;
+
+      if (this.loopMode === 'single') {
+        if (this.audioElement) {
+          this.audioElement.currentTime = 0;
+          this.audioElement.play().catch(() => {});
+        }
+      } else {
+        // Next song in playlist
+        this.nextSong();
       }
     });
 
     this.audioElement.addEventListener('error', () => {
-      // If primary path errors, try fallback
-      if (this.audioElement && !this.audioElement.src.includes('bui-phan.mp3')) {
-        this.audioElement.src = '/assets/audio/bui-phan.mp3';
-        this.audioElement.load();
-        return;
+      const curSong = this.getCurrentSong();
+      this.currentSourceCandidateIndex += 1;
+
+      if (this.currentSourceCandidateIndex < curSong.sources.length) {
+        // Try fallback source
+        if (this.audioElement) {
+          this.audioElement.src = curSong.sources[this.currentSourceCandidateIndex];
+          this.audioElement.load();
+          if (this.isPlaying) {
+            this.audioElement.play().catch(() => {});
+          }
+        }
+      } else {
+        // Switch to synthesizer fallback if all file URLs fail
+        this.hasCustomFile = false;
+        if (this.isPlaying) {
+          this.startSynthPlayback();
+        }
+        this.notify();
       }
-      this.hasCustomFile = false;
-      if (this.isPlaying) {
-        this.startSynthPlayback();
-      }
-      this.notify();
     });
+  }
+
+  private applyCurrentSongSource() {
+    if (!this.audioElement) return;
+    const curSong = this.getCurrentSong();
+    this.currentSourceCandidateIndex = 0;
+    this.hasCustomFile = true;
+    this.audioElement.src = curSong.sources[0];
+    this.audioElement.currentTime = 0;
+    this.audioElement.load();
   }
 
   public initWebAudio() {
     if (!this.audioCtx && typeof window !== 'undefined') {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.audioCtx = new AudioContextClass();
 
       this.analyser = this.audioCtx.createAnalyser();
@@ -118,7 +203,7 @@ class GlobalAudioManager {
   }
 
   /**
-   * Start or resume playing "Bụi Phấn"
+   * Start or resume playing current song
    */
   public async play(): Promise<boolean> {
     this.initWebAudio();
@@ -163,6 +248,71 @@ class GlobalAudioManager {
       this.play();
       return true;
     }
+  }
+
+  /**
+   * Select a song from playlist by index (0, 1, 2)
+   */
+  public selectSong(index: number, autoPlay = true) {
+    if (index < 0 || index >= PLAYLIST.length) return;
+    const isDifferent = this.currentSongIndex !== index;
+    this.currentSongIndex = index;
+    this.currentNoteIndex = 0;
+
+    this.stopSynthPlayback(true);
+
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.applyCurrentSongSource();
+    }
+
+    if (autoPlay || this.isPlaying) {
+      this.play();
+    } else {
+      this.notify();
+    }
+  }
+
+  /**
+   * Switch to next song in playlist
+   */
+  public nextSong(autoPlay = true) {
+    const nextIdx = (this.currentSongIndex + 1) % PLAYLIST.length;
+    this.selectSong(nextIdx, autoPlay);
+  }
+
+  /**
+   * Switch to previous song in playlist
+   */
+  public prevSong(autoPlay = true) {
+    const prevIdx = (this.currentSongIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
+    this.selectSong(prevIdx, autoPlay);
+  }
+
+  public getPlaylist(): SongItem[] {
+    return PLAYLIST;
+  }
+
+  public getCurrentSong(): SongItem {
+    return PLAYLIST[this.currentSongIndex];
+  }
+
+  public getCurrentSongIndex(): number {
+    return this.currentSongIndex;
+  }
+
+  public getLoopMode(): LoopMode {
+    return this.loopMode;
+  }
+
+  public setLoopMode(mode: LoopMode) {
+    this.loopMode = mode;
+    this.notify();
+  }
+
+  public toggleLoopMode() {
+    this.loopMode = this.loopMode === 'playlist' ? 'single' : 'playlist';
+    this.notify();
   }
 
   public setVolume(val: number) {
@@ -224,8 +374,7 @@ class GlobalAudioManager {
   }
 
   /**
-   * Procedural Orchestral Synthesizer for "Bài ca người giáo viên nhân dân"
-   * Plays realistic rich acoustic piano harmonics + violin warmth + chord progression
+   * Procedural Orchestral Synthesizer for offline fallback
    */
   private startSynthPlayback() {
     this.initWebAudio();
@@ -236,19 +385,22 @@ class GlobalAudioManager {
       this.synthTimeoutId = null;
     }
 
-    const tempoBpm = 96; // Lively, heartwarming allegro moderato
+    const curSong = this.getCurrentSong();
+    const tempoBpm = curSong.tempoBpm || 92;
     const beatDurationMs = (60 / tempoBpm) * 1000;
 
     const playNextNote = () => {
       if (!this.isPlaying || !this.audioCtx || !this.analyser) return;
 
-      const score = BUI_PHAN_MELODY;
+      const score = curSong.synthScore;
+      if (!score || score.length === 0) return;
+
       const noteData = score[this.currentNoteIndex];
       const durationSec = (noteData.duration * beatDurationMs) / 1000;
 
       const now = this.audioCtx.currentTime;
 
-      // 1. Lead Melody Note (Acoustic Piano & Flute Harmonic Blend)
+      // 1. Lead Melody Note
       this.synthesizeRichNote(noteData.freq, now, durationSec);
 
       // 2. Harmonious Bass/Arpeggio Accompaniment on chord beats
@@ -257,7 +409,7 @@ class GlobalAudioManager {
         this.synthesizeBassChord(bassFreq, now, durationSec * 2);
       }
 
-      // Advance to next note (looping continuously)
+      // Advance to next note
       this.currentNoteIndex = (this.currentNoteIndex + 1) % score.length;
 
       // Schedule next note
@@ -270,10 +422,9 @@ class GlobalAudioManager {
   private synthesizeRichNote(freq: number, startTime: number, duration: number) {
     if (!this.audioCtx || !this.analyser) return;
 
-    // Harmonic layers for orchestral warmth
     const harmonics = [
       { type: 'triangle' as OscillatorType, mult: 1, gain: 0.22 },
-      { type: 'sine' as OscillatorType, mult: 2, gain: 0.10 },
+      { type: 'sine' as OscillatorType, mult: 2, gain: 0.1 },
       { type: 'sine' as OscillatorType, mult: 3, gain: 0.04 },
     ];
 
@@ -284,7 +435,6 @@ class GlobalAudioManager {
       osc.type = h.type;
       osc.frequency.setValueAtTime(freq * h.mult, startTime);
 
-      // Warm piano/flute envelope
       gain.gain.setValueAtTime(0, startTime);
       gain.gain.linearRampToValueAtTime(h.gain, startTime + 0.04);
       gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);

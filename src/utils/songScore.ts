@@ -206,3 +206,88 @@ export const BAI_CA_NGUOI_GIAO_VIEN_NHAN_DAN_MELODY: MusicalNote[] = [
   { note: 'D4', freq: D4, duration: 1 },
   { note: 'C4', freq: C4, duration: 3 },
 ];
+
+/**
+ * Melody score of "NGHỀ GIÁO TÔI YÊU" (Nhạc & Lời: Bùi Anh Tú)
+ * "Có một nghề bụi phấn bám đầy tay, ta vẫn gọi là nghề cao quý nhất...
+ * Có một nghề không trồng cây vào đất, mà cho đời những đóa hoa thơm..."
+ */
+export const NGHE_GIAO_TOI_YEU_MELODY: MusicalNote[] = [
+  // "Có một nghề bụi phấn bám đầy tay"
+  { note: 'G4', freq: G4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 0.5 },
+  { note: 'B4', freq: B4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 0.5 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'G4', freq: G4, duration: 2 },
+
+  // "Ta vẫn gọi là nghề cao quý nhất"
+  { note: 'G4', freq: G4, duration: 0.5 },
+  { note: 'A4', freq: A4, duration: 1 },
+  { note: 'A4', freq: A4, duration: 0.5 },
+  { note: 'G4', freq: G4, duration: 0.5 },
+  { note: 'F4', freq: F4, duration: 0.5 },
+  { note: 'E4', freq: E4, duration: 1 },
+  { note: 'F4', freq: F4, duration: 1 },
+  { note: 'G4', freq: G4, duration: 2 },
+
+  // "Có một nghề không trồng cây vào đất"
+  { note: 'G4', freq: G4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 0.5 },
+  { note: 'B4', freq: B4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 0.5 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'G4', freq: G4, duration: 2 },
+
+  // "Mà cho đời những đóa hoa thơm"
+  { note: 'A4', freq: A4, duration: 0.5 },
+  { note: 'B4', freq: B4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'E5', freq: E5, duration: 1.5 },
+  { note: 'D5', freq: D5, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 2 },
+
+  // "Có một nghề lặng thầm những đêm thâu"
+  { note: 'C5', freq: C5, duration: 0.5 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'E5', freq: E5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 0.5 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'A4', freq: A4, duration: 2 },
+
+  // "Bên đèn khuya miệt mài trang giáo án"
+  { note: 'A4', freq: A4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 0.5 },
+  { note: 'B4', freq: B4, duration: 0.5 },
+  { note: 'C5', freq: C5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'E5', freq: E5, duration: 2 },
+
+  // "Giọt mồ hôi rơi nhòe trang giấy"
+  { note: 'E5', freq: E5, duration: 0.5 },
+  { note: 'G5', freq: G5, duration: 1 },
+  { note: 'G5', freq: G5, duration: 0.5 },
+  { note: 'E5', freq: E5, duration: 0.5 },
+  { note: 'D5', freq: D5, duration: 0.5 },
+  { note: 'E5', freq: E5, duration: 1 },
+  { note: 'G5', freq: G5, duration: 2 },
+
+  // "Đó là nghề, nghề giáo tôi yêu..."
+  { note: 'A5', freq: A5, duration: 1 },
+  { note: 'G5', freq: G5, duration: 1 },
+  { note: 'E5', freq: E5, duration: 1 },
+  { note: 'D5', freq: D5, duration: 0.5 },
+  { note: 'E5', freq: E5, duration: 0.5 },
+  { note: 'D5', freq: D5, duration: 1 },
+  { note: 'C5', freq: C5, duration: 3 },
+];
+
